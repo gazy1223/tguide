@@ -1,47 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Travel Guide Application</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>旅行ガイド</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            background-color: white;
+            margin-bottom: 20px;
+        }
+        #fileInput {
+            margin: 10px 0;
+        }
+        #results {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: white;
+        }
+    </style>
 </head>
 <body>
-    <h1>AI Travel Guide Application</h1>
-    <div>
-        <h2>Setup</h2>
-        <form id="setupForm">
-            <label for="destination">Destination:</label>
-            <input type="text" id="destination" required>
-            <button type="submit">Get Guide</button>
-        </form>
+    <h1>旅行ガイド - Japanese Travel Guide</h1>
+    <div class="upload-area">
+        <h2>画像アップロードエリア</h2>
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="analyzeBtn">分析する</button>
     </div>
-    <div id="guide" style="display: none;">
-        <h2>Your Travel Guide</h2>
-        <div id="guideContent"></div>
-    </div>
+    <div id="results"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        document.getElementById('setupForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const destination = document.getElementById('destination').value;
-            analyzeDestination(destination);
-        });
-
-        function analyzeDestination(destination) {
-            axios.post('https://api.huggingface.co/analyze', {
-                destination: destination
-            }, {
-                headers: {
-                    'Authorization': 'Bearer YOUR_HUGGING_FACE_API_TOKEN'
-                }
-            })
-            .then(function (response) {
-                document.getElementById('guideContent').innerHTML = response.data.guide;
-                document.getElementById('guide').style.display = 'block';
-            })
-            .catch(function (error) {
-                console.error('Error fetching the travel guide:', error);
-            });
+        document.getElementById('analyzeBtn').onclick = async function() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) return;
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await axios.post('https://api.huggingface.co/models/image-analysis', formData, {
+                    headers: {
+                        'Authorization': 'Bearer YOUR_HUGGINGFACE_API_KEY',
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                displayResults(response.data);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('results').innerHTML = '<p>分析中にエラーが発生しました。</p>';
+            }
+        };
+        
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            resultsDiv.innerHTML += '<h3>結果:</h3>';
+            resultsDiv.innerHTML += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
         }
     </script>
 </body>
